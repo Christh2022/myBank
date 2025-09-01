@@ -15,8 +15,8 @@ export const AddTransaction = ({
   addTransaction,
 }: {
   addTransaction: () => void;
-}) => {
-  const [loading, setLoading] = React.useState<boolean>(false);
+  }) => {
+  const [loading, setLoading] = React.useState<boolean>(false)
   const dispatch = useDispatch();
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,7 +31,7 @@ export const AddTransaction = ({
       category: formData.get('category') as string,
     };
     console.log(transactionData);
-
+    
     if (
       transactionData.amount.toString().length < 1 ||
       transactionData.label?.length <= 3 ||
@@ -49,32 +49,19 @@ export const AddTransaction = ({
 
       const category = await getCategoryByName(transactionData.category);
 
+
       if (card && category) {
-        const data = {
+        const data ={
           amount: transactionData.amount,
           status: 'pending',
           label: transactionData.label,
           bankCards: card.id,
           category: category.id,
           date: new Date(),
-        };
-        const item = await createTransaction(data);
-        const table = [];
-        table.push({
-          id: item.id,
-          date: new Date(item.date).toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          amount: `€${parseFloat(item.amount).toFixed(2)}`,
-          payement_name: item.label,
-          method: 'Visa "3456',
-          category: item.category.title,
-          status: item.status,
-          option: '...',
-        });
+        }
+        const res = await createTransaction(data);
+        const table = []
+        table.push(res)
         dispatch(setTransactions(table));
         toast.success("Vous venez d'ajouter une nouvelle transaction.");
         // fermer le modal et rafraîchir la liste
