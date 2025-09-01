@@ -116,11 +116,5 @@ jobs:
           push: true
           tags: ghcr.io/christh2022/mybank/frontend:latest
 
-      - name: Build & Push Nginx image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./docker/nginx
-          file: ./docker/nginx/Dockerfile
-          push: true
-          tags: ghcr.io/christh2022/mybank/nginx:latest
+      
 
