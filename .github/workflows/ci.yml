@@ -114,7 +114,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile.prod
           push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:latest
+          tags: ghcr.io/christh2022/mybank/frontend:latest
 
       - name: Build & Push Nginx image
         uses: docker/build-push-action@v5
@@ -122,4 +122,5 @@ jobs:
           context: ./docker/nginx
           file: ./docker/nginx/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/nginx:latest
+          tags: ghcr.io/christh2022/mybank/nginx:latest
+
