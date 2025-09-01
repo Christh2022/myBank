@@ -34,10 +34,10 @@ jobs:
 
 
       - name: Prepare JWT keys
-      run: |
-        mkdir -p ./backend/config/jwt
-        cp ./backend/config/jwt/private_test.pem ./backend/config/jwt/private.pem
-        cp ./backend/config/jwt/public_test.pem ./backend/config/jwt/public.pem
+        run: |
+          mkdir -p ./backend/config/jwt
+          cp ./backend/config/jwt/private_test.pem ./backend/config/jwt/private.pem
+          cp ./backend/config/jwt/public_test.pem ./backend/config/jwt/public.pem
 
       # -----------------------------
       # Prepare .env for Symfony
