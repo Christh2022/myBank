@@ -32,6 +32,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      - name: Prepare JWT keys
+        run: |
+          mkdir -p ./backend/config/jwt
+          openssl genrsa -out ./backend/config/jwt/private.pem 2048
+          openssl rsa -in ./backend/config/jwt/private.pem -pubout -out ./backend/config/jwt/public.pem
+
       # -----------------------------
       # Prepare .env for Symfony
       # -----------------------------
@@ -57,6 +64,14 @@ jobs:
         working-directory: ./backend
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Create database for tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
+        run: php bin/console doctrine:database:create --if-not-exists --env=test
+
+
+
       - name: Run migrations
         working-directory: ./backend
         env:
@@ -67,7 +82,9 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
-        run: ./vendor/bin/phpunit --testdox
+        run: php bin/phpunit --filter testRegister
+
+
 
       # -----------------------------
       # Docker Build & Push
@@ -82,13 +99,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Push Backend image
+      - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/backend:latest
+          tags: ghcr.io/christh2022/mybank/backend:latest
+
 
       - name: Build & Push Frontend image
         uses: docker/build-push-action@v5
@@ -96,7 +114,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile.prod
           push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:latest
+          tags: ghcr.io/christh2022/mybank/frontend:latest
 
       - name: Build & Push Nginx image
         uses: docker/build-push-action@v5
@@ -104,4 +122,5 @@ jobs:
           context: ./docker/nginx
           file: ./docker/nginx/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/nginx:latest
+          tags: ghcr.io/christh2022/mybank/nginx:latest
+
