@@ -1,0 +1,17 @@
+.no-hover:hover,
+.no-hover:focus-visible {
+    background: #FCA311 !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    outline: none !important;
+    cursor: pointer;
+}
+
+.h2-color{
+    background: linear-gradient(to top, #c9c9c9e8, #FFFFFF);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
