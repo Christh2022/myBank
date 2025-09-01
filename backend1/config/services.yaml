@@ -1,0 +1,9 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    Symfony\Component\RateLimiter\RateLimiterFactory $apiLimiter: '@rate_limiter.api_limiter'
