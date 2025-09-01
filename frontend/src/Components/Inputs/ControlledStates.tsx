@@ -71,6 +71,7 @@ export default function ControlledStates({
     value,
     onChange: (event, newValue) => {
       setValue(newValue);
+      console.log(event);
       if (newValue) {
         setIcon(newValue.label); // ou .label selon ce que tu veux transmettre
       }

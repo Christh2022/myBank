@@ -43,6 +43,7 @@ export default function LeftProfilePart() {
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
+    console.log(event);
   };
   return (
     <div className="hidden md:flex sm:flex-col sm:flex-3/12 px-2 lg:pr-3 lg:pl-3 xl:pl-6  md:border-r md:border-[rgba(255,255,255,0.2)] overflow-hidden">
