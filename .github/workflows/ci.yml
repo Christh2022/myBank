@@ -75,7 +75,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
-        run: ./vendor/bin/phpunit --testdox
+        run: php bin/phpunit
 
       # -----------------------------
       # Docker Build & Push
