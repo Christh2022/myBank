@@ -32,7 +32,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true  # <-- important pour Option B
+          submodules: recursive  # <- Clonage de tous les submodules
+
+      # -----------------------------
+      # Debug : vérifier backend
+      # -----------------------------
+      - name: List backend folder
+        run: ls -R ./backend
 
       # -----------------------------
       # Backend - PHPUnit tests
