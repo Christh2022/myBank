@@ -2,9 +2,9 @@ name: CI Fullstack with Docker & GHCR
 
 on:
   push:
-    branches: [ "main", "develop", "roldi" ]
+    branches: [ "main"]
   pull_request:
-    branches: [ "main", "develop", "roldi" ]
+    branches: [ "main"]
 
 jobs:
   ci-cd:
