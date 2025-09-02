@@ -1,160 +1,111 @@
-# myBank
-Objectif
+# 💳 MyBank – Fullstack App
 
-Mettre en place un pipeline CI/CD pour :
+MyBank est une application bancaire fullstack composée d’un **backend Symfony** et d’un **frontend React**, déployée avec **Docker** et automatisée via **GitHub Actions** + **GitHub Container Registry (GHCR)**.
 
-Vérifier que le backend Symfony fonctionne (tests PHPUnit, migrations).
+---
 
-Construire et publier les images Docker du backend et du frontend sur le GitHub Container Registry (GHCR).
+## 🚀 Fonctionnalités principales
+- Backend **Symfony 6** (API, gestion utilisateurs, sécurité JWT).
+- Frontend **React** (interface utilisateur).
+- Base de données **MySQL 8**.
+- Interface de gestion **phpMyAdmin**.
+- Proxy **Nginx**.
+- CI/CD avec **GitHub Actions** et **Docker**.
 
-Déployer l’application avec Docker Compose (local/dev ou production).
+---
 
-⚙️ 1. Intégration Continue (CI)
+## 🐳 Installation de Docker & Docker Compose
 
-Le fichier .github/workflows/ci.yml exécute les étapes suivantes à chaque push ou pull request sur main :
+### Windows / macOS
+1. Télécharger **Docker Desktop** :  
+   👉 [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)  
+2. Lancer Docker Desktop.  
+3. Vérifier l’installation :  
+   ```bash
+   docker --version
+   docker compose version
 
-Étapes du pipeline
+### Linux (Ubuntu/Debian)
+    sudo apt update
+    sudo apt install ca-certificates curl gnupg lsb-release
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt update
+    sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-Checkout du code
+## Génération des clés JWT (obligatoire)
 
-- uses: actions/checkout@v4
+Le backend utilise LexikJWTAuthenticationBundle pour sécuriser les API.
+Avant de démarrer l’application pour la première fois, il faut générer les clés RSA :
 
+mkdir -p backend/config/jwt
+openssl genrsa -out backend/config/jwt/private.pem 2048
+openssl rsa -in backend/config/jwt/private.pem -pubout -out backend/config/jwt/public.pem
 
-Récupère le code source.
+👉 Ces fichiers doivent être présents dans backend/config/jwt/.
+👉 Ne jamais partager la clé privée (private.pem) publiquement.
 
-Préparation des clés JWT
-Génération des clés privées/publiques nécessaires à Symfony.
-
-Configuration de l’environnement Symfony
-Copie du .env.test en .env.
-
-Installation des dépendances PHP
-
-composer install
-
-
-Base de données de test
-
-Lancement d’un service MySQL (via services: dans GitHub Actions).
-
-Création de la DB de test.
-
-Exécution des migrations.
-
-Tests unitaires
-
-php bin/phpunit
-
-
-Build & Push Docker
-
-Configuration de buildx.
-
-Connexion à GHCR avec ${{ secrets.GITHUB_TOKEN }}.
-
-Build + push de :
-
-ghcr.io/christh2022/mybank/backend:latest
-
-ghcr.io/christh2022/mybank/frontend:latest
-
-👉 Résultat : chaque modification validée sur main génère automatiquement de nouvelles images Docker.
-
-📦 2. Livraison Continue (CD)
-
-Deux options :
-
-🔹 Environnement local/dev
-
-Utiliser le docker-compose.yml (build localement les images) :
-
-docker-compose up --build
+## Lancer l’application en local (dev)
+docker compose -f docker-compose.dev.yml up --build
 
 
-Frontend accessible sur http://localhost:3000
+### Services disponibles :
 
-Backend Symfony sur http://localhost:8000
+Frontend → http://localhost:3000
 
-PhpMyAdmin sur http://localhost:8080
+Backend (Symfony API) → http://localhost:8000
 
-Nginx (reverse proxy) sur http://localhost
+PhpMyAdmin → http://localhost:8080
 
-🔹 Environnement de production
+Nginx → http://localhost
 
-Créer un fichier docker-compose.prod.yml qui récupère les images depuis GHCR au lieu de les builder localement :
+### Arrêter les conteneurs :
 
-version: "3.9"
+docker compose down
 
-services:
-  frontend:
-    image: ghcr.io/christh2022/mybank/frontend:latest
-    container_name: mybank_frontend
-    restart: always
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-
-  backend:
-    image: ghcr.io/christh2022/mybank/backend:latest
-    container_name: mybank_backend
-    restart: always
-    environment:
-      - DATABASE_URL=mysql://root:root@db:3306/mybank?serverVersion=8.0
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-
-  db:
-    image: mysql:8.3
-    container_name: mybank_db
-    restart: always
-    environment:
-      MYSQL_DATABASE: mybank
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-    volumes:
-      - db_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-
-  nginx:
-    image: nginx:1.28.0-alpine-slim
-    container_name: mybank_nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./docker/nginx/default.config:/etc/nginx/conf.d/default.config:ro
-    depends_on:
-      - frontend
-      - backend
-
-volumes:
-  db_data:
-
-🚀 Déploiement prod
-
-Se connecter à GHCR sur le serveur :
-
-echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+## Tests
+### Backend (Symfony + PHPUnit)
+    Le backend inclut des tests unitaires et fonctionnels avec PHPUnit.
+    
+    Copier le fichier .env.test :
+    
+    cp backend/.env.test backend/.env
 
 
-(où GITHUB_TOKEN est un PAT (Personal Access Token) avec le scope read:packages).
+### Créer la base de données de test :
+    docker compose exec backend php bin/console doctrine:database:create --env=test
+    docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction --env=test
 
-Lancer le stack :
 
-docker-compose -f docker-compose.prod.yml up -d
+### Lancer les tests :
 
-🧪 Résumé du flux CI/CD
+docker compose exec backend php bin/phpunit
 
-Dev push sur main ⏩
 
-GitHub Actions lance tests Symfony + build images ⏩
+👉 Exemple pour lancer uniquement un test spécifique :
 
-Images Docker envoyées sur GHCR ⏩
+docker compose exec mybank_backend php bin/phpunit --filter testRegister
 
-Serveur de prod tire les nouvelles images via docker-compose.prod.yml ⏩
 
-Déploiement automatique et reproductible 🎉
+## CI/CD (Intégration & Déploiement Continu)
+Intégration Continue (CI)
+
+Chaque push sur main déclenche un workflow GitHub Actions qui :
+
+Lance les tests PHPUnit du backend.
+
+Construit les images Docker (backend + frontend).
+
+Publie ces images sur le GitHub Container Registry (GHCR).
+
+Déploiement Continu (CD)
+
+Sur le serveur de production, on utilise docker-compose.prod.yml (basé sur les images GHCR).
+
+Mise à jour en production :
+
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+
+👉 Cela télécharge les dernières images générées par GitHub Actions et redémarre les conteneurs.
