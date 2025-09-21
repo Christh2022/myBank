@@ -47,6 +47,8 @@ openssl rsa -in backend/config/jwt/private.pem -pubout -out backend/config/jwt/p
 
 ## Lancer l’application en local (dev)
 docker compose -f docker-compose.dev.yml up --build
+docker exec -it mybank_backend sh 
+symfony console doctrine:migrations:migrate
 
 
 ### Services disponibles :
