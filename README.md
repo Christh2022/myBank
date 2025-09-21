@@ -46,10 +46,11 @@ openssl rsa -in backend/config/jwt/private.pem -pubout -out backend/config/jwt/p
 👉 Ne jamais partager la clé privée (private.pem) publiquement.
 
 ## Lancer l’application en local (dev)
-docker compose -f docker-compose.dev.yml up --build
-docker exec -it mybank_backend sh 
-symfony console doctrine:migrations:migrate
-
+```bash
+   docker compose -f docker-compose.dev.yml up --build
+   docker exec -it mybank_backend sh 
+   symfony console doctrine:migrations:migrate
+```
 
 ### Services disponibles :
 
@@ -80,14 +81,15 @@ docker compose down
 
 
 ### Lancer les tests :
+```bash
 
 docker compose exec backend php bin/phpunit
-
+```
 
 👉 Exemple pour lancer uniquement un test spécifique :
-
+```bash
 docker compose exec mybank_backend php bin/phpunit --filter testRegister
-
+```
 
 ## CI/CD (Intégration & Déploiement Continu)
 Intégration Continue (CI)
@@ -102,12 +104,15 @@ Publie ces images sur le GitHub Container Registry (GHCR).
 
 Déploiement Continu (CD)
 
-Sur le serveur de production, on utilise docker-compose.prod.yml (basé sur les images GHCR).
+Sur le serveur de production, on utilise 
+```bash 
+docker-compose.prod.yml (basé sur les images GHCR).
+```
 
 Mise à jour en production :
-
+```bash
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
-
+```
 
 👉 Cela télécharge les dernières images générées par GitHub Actions et redémarre les conteneurs.
