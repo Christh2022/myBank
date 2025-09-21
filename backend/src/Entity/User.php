@@ -9,6 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Key;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface,  PasswordAuthenticatedUserInterface
@@ -67,6 +69,14 @@ class User implements UserInterface,  PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Category::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $categories;
+
+    // Clé de chiffrement statique (à initialiser depuis .env)
+    private static ?Key $encryptionKey = null;
+
+    public static function setEncryptionKey(string $key): void
+    {
+        self::$encryptionKey = Key::loadFromAsciiSafeString($key);
+    }
 
     public function __construct()
     {
@@ -130,24 +140,32 @@ class User implements UserInterface,  PasswordAuthenticatedUserInterface
 
     public function getAdresse(): ?string
     {
-        return $this->adresse;
+        return $this->adresse && self::$encryptionKey
+            ? Crypto::decrypt($this->adresse, self::$encryptionKey)
+            : $this->adresse;
     }
 
     public function setAdresse(string $adresse): static
     {
-        $this->adresse = $adresse;
+        $this->adresse = $adresse && self::$encryptionKey
+            ? Crypto::encrypt($adresse, self::$encryptionKey)
+            : $adresse;
 
         return $this;
     }
 
     public function getTelephone(): ?string
     {
-        return $this->telephone;
+        return $this->telephone && self::$encryptionKey
+            ? Crypto::decrypt($this->telephone, self::$encryptionKey)
+            : $this->telephone;
     }
 
     public function setTelephone(string $telephone): static
     {
-        $this->telephone = $telephone;
+        $this->telephone = $telephone && self::$encryptionKey
+            ? Crypto::encrypt($telephone, self::$encryptionKey)
+            : $telephone;
 
         return $this;
     }

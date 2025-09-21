@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AuthenticationController extends AbstractController
 {
@@ -55,38 +56,56 @@ class AuthenticationController extends AbstractController
 
     #[Route('/register', name: 'api_register', methods: ['POST'])]
     public function register(
-        Request $request, 
-        EntityManagerInterface $entityManager, 
-        UserPasswordHasherInterface $passwordHasher, 
-        UserRepository $userRepository): JsonResponse
-    {
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher,
+        UserRepository $userRepository,
+        ValidatorInterface $validator
+    ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['nom']) || empty($data['prenom']) || empty($data['email']) || empty($data['password'])) {
-            return $this->json(['error' => 'Name, surname, email, and password are required'], 400);
+            return $this->json(['error' => 'Invalid input'], 400);
         }
 
-        // Check if the user already exists
-        if ($userRepository->findOneBy(['email' => $data['email']])) {
-            return $this->json(['error' => 'User already exists'], 400);
+        // Nettoyage basique
+        $nom = strip_tags(trim($data['nom']));
+        $prenom = strip_tags(trim($data['prenom']));
+        $email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
+        $adresse = isset($data['adresse']) ? strip_tags(trim($data['adresse'])) : null;
+        $telephone = isset($data['telephone']) ? strip_tags(trim($data['telephone'])) : null;
+
+        // Vérification utilisateur existant
+        if ($userRepository->findOneBy(['email' => $email])) {
+            // Réponse générique (éviter enumeration d’emails)
+            return $this->json(['message' => 'If the registration is valid, you will receive an email'], 201);
         }
 
-        // Create a new user
+        // Création du user
         $user = new User();
-        $user->setNom($data['nom']);
-        $user->setPrenom($data['prenom']);
-        $user->setEmail($data['email']);
+        $user->setNom($nom);
+        $user->setPrenom($prenom);
+        $user->setEmail($email);
         $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
-        $user->setRole($data['role'] ?? 'ROLE_USER'); // Default role if not provided
-        $user->setAdresse($data['adresse'] ?? null);
-        $user->setTelephone($data['telephone'] ?? null);
+        $user->setRole('ROLE_USER'); // ⚠️ toujours forcer côté serveur
+        $user->setAdresse($adresse);
+        $user->setTelephone($telephone);
         $user->setCreatedAt(new \DateTimeImmutable());
 
-        // Persist the user entity
+        // Validation entité
+        $errors = $validator->validate($user);
+        if (count($errors) > 0) {
+            $errMsgs = [];
+            foreach ($errors as $error) {
+                $errMsgs[] = $error->getPropertyPath() . ': ' . $error->getMessage();
+            }
+            return $this->json(['error' => 'Invalid input data'], 400);
+        }
+
+        // Sauvegarde
         $entityManager->persist($user);
         $entityManager->flush();
 
         return $this->json(['message' => 'User registered successfully'], 201);
     }
-
 }
