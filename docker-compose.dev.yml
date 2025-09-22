@@ -23,12 +23,10 @@ services:
     # entrypoint: ["sh", "./docker-entrypoint.sh"]
     volumes:
       - ./backend:/var/www
-      # - ./backend/config/jwt:/var/www/config/jwt
     working_dir: /var/www
     command: symfony server:start --no-tls --allow-http --port=8000 --allow-all-ip
     environment:
       - DATABASE_URL=mysql://root:root@db:3306/mybank?serverVersion=8.0
-      # - JWT_PASSPHRASE=MyBank_protège_vos_données_avec_une_sécurité_de_niveau_militaire_et_une_confidentialité_totale.  # passephrase de ta clé privée si utilisée
     depends_on:
       - db
 
