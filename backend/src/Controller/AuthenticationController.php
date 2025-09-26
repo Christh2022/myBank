@@ -13,9 +13,11 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class AuthenticationController extends AbstractController
 {
+
     #[Route('/login', name: 'api_login', methods: ['POST'])]
     public function index(#[CurrentUser] ?User $user, JWTTokenManagerInterface $jwtManager): JsonResponse
     {
@@ -23,9 +25,37 @@ class AuthenticationController extends AbstractController
             return $this->json(['error' => 'invalid_credentials'], 401);
         }
 
-        return $this->json(['token' => $jwtManager->create($user)], 200, [], ['groups' => ['user:read']]);
+        // 🔑 Génération du JWT
+        $token = $jwtManager->create($user);
 
+        // 🔒 Création du cookie HttpOnly
+        $response = $this->json([
+            'message' => 'Login successful',
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'nom' => $user->getNom(),
+                'prenom' => $user->getPrenom()
+            ]
+        ]);
+
+        $response->headers->setCookie(
+            new Cookie(
+                'AUTH_TOKEN', // nom
+                $token,       // valeur
+                time() + 1800, // 30 minutes
+                '/',          // chemin
+                null,         // domaine
+                true,         // sécurisé
+                true,         // httpOnly
+                false,        // raw
+                'Strict'      // SameSite
+            )
+        );
+
+        return $response;
     }
+
 
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]
     public function logout(): JsonResponse
@@ -68,7 +98,7 @@ class AuthenticationController extends AbstractController
             return $this->json(['error' => 'Invalid input'], 400);
         }
 
-        // Nettoyage basique
+        // Nettoyage des données
         $nom = strip_tags(trim($data['nom']));
         $prenom = strip_tags(trim($data['prenom']));
         $email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
@@ -87,7 +117,7 @@ class AuthenticationController extends AbstractController
         $user->setPrenom($prenom);
         $user->setEmail($email);
         $user->setPassword($passwordHasher->hashPassword($user, $data['password']));
-        $user->setRole('ROLE_USER'); // ⚠️ toujours forcer côté serveur
+        $user->setRole('ROLE_USER'); // toujours forcer côté serveur
         $user->setAdresse($adresse);
         $user->setTelephone($telephone);
         $user->setCreatedAt(new \DateTimeImmutable());

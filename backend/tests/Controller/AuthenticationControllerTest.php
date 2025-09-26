@@ -51,21 +51,29 @@ class AuthenticationControllerTest extends WebTestCase
         );
 
         $this->assertResponseIsSuccessful();
-        $data = json_decode($client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('token', $data);
 
-        $token = $data['token'];
+        // Vérifier que le cookie AUTH_TOKEN est bien présent
+        $cookies = $client->getResponse()->headers->getCookies();
+        $authCookie = null;
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === 'AUTH_TOKEN') {
+                $authCookie = $cookie;
+                break;
+            }
+        }
 
-        // Accès à une route protégée avec token valide
+        $this->assertNotNull($authCookie, 'AUTH_TOKEN cookie should be set after login');
+
+        // Utilise le cookie pour accéder à la route protégée
+        $client->getCookieJar()->set($authCookie);
+
+
         $client->request(
             'GET',
-            '/check', // remplacer par ta route protégée
+            '/check',
             [],
             [],
-            [
-                'HTTP_Authorization' => 'Bearer ' . $token,
-                'CONTENT_TYPE' => 'application/json'
-            ]
+            ['CONTENT_TYPE' => 'application/json']
         );
 
         $this->assertResponseIsSuccessful();

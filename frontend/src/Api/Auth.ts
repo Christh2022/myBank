@@ -10,7 +10,6 @@ export async function LoginUser(email: string, password: string): Promise<string
     if (!response.ok) throw new Error('Login failed');
     
     const data = await response.json();
-    localStorage.setItem('token', data.token);
     return data.token;
 }
 
