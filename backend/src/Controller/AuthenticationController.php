@@ -14,47 +14,54 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpFoundation\Cookie;
-
+use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessResponse;
 class AuthenticationController extends AbstractController
 {
 
     #[Route('/login', name: 'api_login', methods: ['POST'])]
-    public function index(#[CurrentUser] ?User $user, JWTTokenManagerInterface $jwtManager): JsonResponse
-    {
+    public function index(
+        #[CurrentUser] ?User $user,
+        JWTTokenManagerInterface $jwtManager
+    ): JsonResponse {
         if (!$user) {
             return $this->json(['error' => 'invalid_credentials'], 401);
         }
 
-        // 🔑 Génération du JWT
+        // Génération du JWT
         $token = $jwtManager->create($user);
 
-        // 🔒 Création du cookie HttpOnly
-        $response = $this->json([
-            'message' => 'Login successful',
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'nom' => $user->getNom(),
-                'prenom' => $user->getPrenom()
-            ]
-        ]);
+        // Vérifier si on est en environnement de test
+        $isTest = $this->getParameter('kernel.environment') === 'test';
 
-        $response->headers->setCookie(
-            new Cookie(
-                'AUTH_TOKEN', // nom
-                $token,       // valeur
-                time() + 1800, // 30 minutes
-                '/',          // chemin
-                null,         // domaine
-                true,         // sécurisé
-                true,         // httpOnly
-                false,        // raw
-                'Strict'      // SameSite
-            )
+        // Création du cookie HttpOnly
+        $cookie = new Cookie(
+            'AUTH_TOKEN',          // nom
+            $token,                // valeur
+             new \DateTimeImmutable('+30 minutes'), // expiration 30 min
+            '/',                   // path
+            'localhost',           // domaine (null = current host)
+            $isTest,              // secure = false en test, true en prod
+            true,                  // HttpOnly
+            false,                 // raw
+            'Strict'               // SameSite
         );
 
+
+        // Utiliser directement JsonResponse
+        $response = $this->json(['token' => $token]);
+
+        // Attacher le cookie à la réponse
+        $response->headers->setCookie($cookie);
         return $response;
+
+
+        // // Attach cookie
+        // $response->headers->setCookie($cookie);
+
+
+        // return $response;
     }
+
 
 
     #[Route('/logout', name: 'api_logout', methods: ['POST'])]

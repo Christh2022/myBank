@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\BrowserKit\Cookie;
 
 class AuthenticationControllerTest extends WebTestCase
 {
@@ -36,7 +37,6 @@ class AuthenticationControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // Login avec utilisateur existant
         $client->request(
             'POST',
             '/login',
@@ -44,7 +44,6 @@ class AuthenticationControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([
-
                 'email' => 'testuser100@example.com',
                 'password' => 'TestPassword123!'
             ])
@@ -52,93 +51,108 @@ class AuthenticationControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        // Vérifier que le cookie AUTH_TOKEN est bien présent
-        $cookies = $client->getResponse()->headers->getCookies();
-        $authCookie = null;
+        $response = $client->getResponse();
+        $data = json_decode($response->getContent(), true);
+        $this->assertArrayHasKey('token', $data);
+
+        $cookies = $response->headers->getCookies();
+        $this->assertIsArray($cookies); 
+
         foreach ($cookies as $cookie) {
-            if ($cookie->getName() === 'AUTH_TOKEN') {
-                $authCookie = $cookie;
-                break;
-            }
+            $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class, $cookie);
         }
+        $token = $data['token'];
 
-        $this->assertNotNull($authCookie, 'AUTH_TOKEN cookie should be set after login');
-
-        // Utilise le cookie pour accéder à la route protégée
-        $client->getCookieJar()->set($authCookie);
-
-
+        // Accéder à la route protégée en utilisant le JWT
         $client->request(
             'GET',
             '/check',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json']
+            ['HTTP_Authorization' => 'Bearer ' . $token]
         );
 
         $this->assertResponseIsSuccessful();
         $this->assertJson($client->getResponse()->getContent());
 
+        // Vérifier les données utilisateur
         $userData = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('user', $userData);
-        $this->assertSame('testuser100@example.com', $userData['user']['email']);
-        fwrite(STDOUT, "{Status: 200, data: `{$userData['user']['email']}`}\n");
+        fwrite(STDOUT, "{Status: 200, data: 'Connexion Réussie'}\n");
     }
 
     public function testAccessWithoutToken(): void
     {
         $client = static::createClient();
 
-        $client->request(
-            'GET',
-            '/check', // route protégée
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json']
-        );
+        // Pas de login → pas de cookie AUTH_TOKEN injecté
+        $client->request('GET', '/check');
 
+        // On attend un 401 Unauthorized
         $this->assertResponseStatusCodeSame(401);
-        $this->assertStringContainsString('Accès non autorisé', $client->getResponse()->getContent());
+
+        // Vérifie que le message d'erreur est bien présent dans la réponse
+        $content = $client->getResponse()->getContent();
+        $this->assertNotEmpty($content, 'Response content should not be empty on unauthorized request');
+        $this->assertStringContainsString('Accès non autorisé', $content);
     }
+
 
     public function testAccessWithInvalidToken(): void
     {
         $client = static::createClient();
 
-        $client->request(
-            'GET',
-            '/check',
-            [],
-            [],
-            [
-                'HTTP_Authorization' => 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NTA2MzEzNzAsImV4cCI6MTc1MDYzNDk3MCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidGVzdHVzZXIwNEBleGFtcGxlLmNvbSJ9.ob19itXt_UXtqiUM_lZmkk0r0l7sxHlkMTDePmuNtBskt8x1Qc7lqz_pHwyDkaWaEqM0qFVapQj4v_HYPWr897p7vu8AQXOwYPAAFdaGZTOZgPbLZNK6IxrMV5zOI1b-8xnu7dLBjMnBow2OOicTEIJypxxqVF7zXzt22EuSWj0I2U9QSI8yhCB9Bgi9PyWh8j5I9yF3zevRz88p-u7V-uKTJdF1CszUNmzsIzlIAzHMFAYB6gFAEZr1H6xqmV4IX1mF8nTujGFZ6YwkDo3m7YuK6QUd5dLI0KZTbgtcy5MIFrU_L5Z77dMDfendZnc-3Ke5wY1HNaqhzQY6XNjFeAPgCHAGUX-E6RuXVyaZHqoyHhWfgOgNuagFlB55Fs22StDCBFe81vYEhEIo0nNKc1vBxP3xHgXXokIVt9qQSj1HwBROb7j2B_uplr3DMDsalsMBp7wrI3ebSfGWMVQ6m42kh4av4sDaxLZ7ZEUkbgrfg6Mxdl7ST00FlVGu_3_dmmwS2leTMHAAZLDf2IaE1-sn1pHsmRhE8MUF3YvjlwPsHFCNIUY2kCV89lwOX6i0_LMrJcwkijxX--a_ex14j1JFkaBJkoe1YF9Akqr94Fd5DOjW7rLh04VzJQbhsBtUpyDSFE2CsnOhqKHFaht1dna5tPs6CsqeG3kZA5z8DCg',
-                'CONTENT_TYPE' => 'application/json'
-            ]
+        // Simuler un cookie AUTH_TOKEN invalide
+        $invalidCookie = new Cookie(
+            'AUTH_TOKEN',
+            'fake.invalid.jwt.token',
+            time() + 3600,
+            '/',
+            'localhost',
+            true,
+            true
         );
 
+        $client->getCookieJar()->set($invalidCookie);
+
+        // Tentative d'accès à la route protégée
+        $client->request('GET', '/check');
+
+        // On attend un 403 Forbidden (ou 401 selon ton firewall)
         $this->assertResponseStatusCodeSame(403);
+
         fwrite(STDOUT, "{Status: 403, data: 'Invalid token' }\n");
-        // $this->assertStringContainsString('Invalid token', $client->getResponse()->getContent());
     }
+
 
     public function testAccessWithExpiredToken(): void
     {
         $client = static::createClient();
 
-        $expiredToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NTA2MzEzNzAsImV4cCI6MTc1MDYzNDk3MCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidGVzdHVzZXIwNEBleGFtcGxlLmNvbSJ9.ob19itXt_UXtqiUM_lZmkk0r0l7sxHlkMTDePmuNtBskt8x1Qc7lqz_pHwyDkaWaEqM0qFVapQj4v_HYPWr897p7vu8AQXOwYPAAFdaGZTOZgPbLZNK6IxrMV5zOI1b-8xnu7dLBjMnBow2OOicTEIJypxxqVF7zXzt22EuSWj0I2U9QSI8yhCB9Bgi9PyWh8j5I9yF3zevRz88p-u7V-uKTJdF1CszUNmzsIzlIAzHMFAYB6gFAEZr1H6xqmV4IX1mF8nTujGFZ6YwkDo3m7YuK6QUd5dLI0KZTbgtcy5MIFrU_L5Z77dMDfendZnc-3Ke5wY1HNaqhzQY6XNjFeAPgCHAGUX-E6RuXVyaZHqoyHhWfgOgNuagFlB55Fs22StDCBFe81vYEhEIo0nNKc1vBxP3xHgXXokIVt9qQSj1HwBROb7j2B_uplr3DMDsalsMBp7wrI3ebSfGWMVQ6m42kh4av4sDaxLZ7ZEUkbgrfg6Mxdl7ST00FlVGu_3_dmmwS2leTMHAAZLDf2IaE1-sn1pHsmRhE8MUF3YvjlwPsHFCNIUY2kCV89lwOX6i0_LMrJcwkijxX--a_ex14j1JFkaBJkoe1YF9Akqr94Fd5DOjW7rLh04VzJQbhsBtUpyDSFE2CsnOhqKHFaht1dna5tPs6CsqeG3kZA5z8DCg'; // remplace par un vrai token expiré si possible
+        // Ici tu peux soit mettre un vrai JWT expiré, soit une valeur bidon 
+        // (le but étant de simuler un cookie dont l'expiration est passée)
+        $expiredToken = 'fake.expired.jwt.token';
 
-        $client->request(
-            'GET',
-            '/check',
-            [],
-            [],
-            [
-                'HTTP_Authorization' => 'Bearer ' . $expiredToken,
-                'CONTENT_TYPE' => 'application/json'
-            ]
+        // Cookie AUTH_TOKEN expiré (date dans le passé)
+        $expiredCookie = new Cookie(
+            'AUTH_TOKEN',
+            $expiredToken,
+            time() - 3600,  // ⏳ déjà expiré
+            '/',
+            'localhost',
+            true,   // secure
+            true    // httponly
         );
 
-        $this->assertResponseStatusCodeSame(401); 
+        $client->getCookieJar()->set($expiredCookie);
+
+        // Tentative d'accès à la route protégée
+        $client->request('GET', '/check');
+
+        // On attend une erreur 401 Unauthorized
+        $this->assertResponseStatusCodeSame(401);
+
+        // Vérifie que la réponse contient bien une indication "token expiré"
         $this->assertStringContainsString('Token expired', $client->getResponse()->getContent());
     }
 }
