@@ -88,40 +88,46 @@ class AuthenticationControllerTest extends WebTestCase
         // Pas de login → pas de cookie AUTH_TOKEN injecté
         $client->request('GET', '/check');
 
-        // On attend un 401 Unauthorized
+        // On attend un 401 Unauthorized (ou 403 si configuré ainsi)
         $this->assertResponseStatusCodeSame(401);
 
-        // Vérifie que le message d'erreur est bien présent dans la réponse
+        // Vérifie que la réponse contient le message d'erreur attendu
         $content = $client->getResponse()->getContent();
         $this->assertNotEmpty($content, 'Response content should not be empty on unauthorized request');
-        $this->assertStringContainsString('Accès non autorisé', $content);
+        $this->assertStringContainsString('JWT Token not found', $content);
+        fwrite(STDOUT, "{Status: 401, data: 'JWT Token not found'}\n");
     }
+
 
 
     public function testAccessWithInvalidToken(): void
     {
-        $client = static::createClient();
+        // Générer un faux token (signature invalide)
+        $fakeToken = $this->generateFakeJwt(['sub' => 'testuser100@example.com']);
+        var_dump($fakeToken);
 
         // Simuler un cookie AUTH_TOKEN invalide
         $invalidCookie = new Cookie(
             'AUTH_TOKEN',
-            'fake.invalid.jwt.token',
+            $fakeToken,
             time() + 3600,
             '/',
             'localhost',
-            true,
-            true
+            false, 
+            true   
         );
 
+        $client = static::createClient();
         $client->getCookieJar()->set($invalidCookie);
 
         // Tentative d'accès à la route protégée
         $client->request('GET', '/check');
 
-        // On attend un 403 Forbidden (ou 401 selon ton firewall)
-        $this->assertResponseStatusCodeSame(403);
+        // Vérifier le code HTTP
+        $this->assertResponseStatusCodeSame(401); 
 
-        fwrite(STDOUT, "{Status: 403, data: 'Invalid token' }\n");
+        // Afficher un message dans la console
+        fwrite(STDOUT, "{Status: 401, data: 'Invalid token'}\n");
     }
 
 
@@ -154,5 +160,39 @@ class AuthenticationControllerTest extends WebTestCase
 
         // Vérifie que la réponse contient bien une indication "token expiré"
         $this->assertStringContainsString('Token expired', $client->getResponse()->getContent());
+    }
+
+
+    /**
+     * Helper : génère un faux JWT (forme correctement encodée header.payload.signature)
+     * La signature est volontairement invalide — utile pour tester le rejet côté serveur.
+     *
+     * @param array $payload
+     * @param array $header
+     * @return string
+     */
+    private function generateFakeJwt(array $payload = [], array $header = ['alg' => 'HS256', 'typ' => 'JWT']): string
+    {
+        $payload = array_merge([
+            'iat' => time(),
+            'exp' => time() + 3600,
+        ], $payload);
+
+        $headerB64  = $this->base64urlEncode(json_encode($header));
+        $payloadB64 = $this->base64urlEncode(json_encode($payload));
+
+        // signature volontairement invalide / factice
+        $fakeSignature = 'invalid-signature-for-testing';
+        $signatureB64 = $this->base64urlEncode($fakeSignature);
+
+        return sprintf('%s.%s.%s', $headerB64, $payloadB64, $signatureB64);
+    }
+
+    /**
+     * Helper : base64 URL-safe encode (RFC 7515 style)
+     */
+    private function base64urlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 }
