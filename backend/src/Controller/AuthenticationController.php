@@ -27,39 +27,10 @@ class AuthenticationController extends AbstractController
             return $this->json(['error' => 'invalid_credentials'], 401);
         }
 
-        // Génération du JWT
         $token = $jwtManager->create($user);
 
-        // Vérifier si on est en environnement de test
-        $isTest = $this->getParameter('kernel.environment') === 'test';
-
-        // Création du cookie HttpOnly
-        $cookie = new Cookie(
-            'AUTH_TOKEN',          // nom
-            $token,                // valeur
-             new \DateTimeImmutable('+30 minutes'), // expiration 30 min
-            '/',                   // path
-            'localhost',           // domaine (null = current host)
-            $isTest,              // secure = false en test, true en prod
-            true,                  // HttpOnly
-            false,                 // raw
-            'Strict'               // SameSite
-        );
-
-
-        // Utiliser directement JsonResponse
-        $response = $this->json(['token' => $token]);
-
-        // Attacher le cookie à la réponse
-        $response->headers->setCookie($cookie);
-        return $response;
-
-
-        // // Attach cookie
-        // $response->headers->setCookie($cookie);
-
-
-        // return $response;
+        // Juste renvoyer le token en JSON, le cookie sera géré par le listener
+        return new JsonResponse(['token' => $token]);
     }
 
 

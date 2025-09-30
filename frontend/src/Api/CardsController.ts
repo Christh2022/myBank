@@ -3,14 +3,13 @@ import { toast } from "react-toastify";
 const API_URL = import.meta.env.VITE_API_URL_DEV; 
 
 export async function   getBankCardByNumber(cardNumber: string) {
-    const token = localStorage.getItem("token");
 
     const response = await fetch(`${API_URL}/api/bankcards/by-number/${cardNumber}`, {
         method: "GET",
         headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
         },
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -23,13 +22,12 @@ export async function   getBankCardByNumber(cardNumber: string) {
 }
 
 export async function addBankCard(cardData: number) {
-    const token = localStorage.getItem("token");
     const response = await fetch(API_URL, {
         method: "POST",
         headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify(cardData),
     });
 

@@ -5,7 +5,9 @@ import { visible } from '../Redux/Slices/navSlice';
 import { Header } from '../Components/Header/Header';
 
 function AppLayout() {
-    const navVisible = useSelector(visible)
+  const navVisible = useSelector(visible)
+
+  
   return (
     <main>
       {navVisible && (

@@ -1,14 +1,13 @@
 import { RouterProvider } from 'react-router/dom';
 import router from './Router/Routes';
-import { requireAuth } from './utils/Auth';
 import { useEffect, useState } from 'react';
 import './App.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { setNavVisible, visible } from './Redux/Slices/navSlice';
 import { getUser } from './Redux/Slices/userSlice';
-import type { User } from './utils/Types';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { requireAuth } from './utils/Auth';
 
 export function LoaderBoundary() {
   return (
@@ -28,36 +27,34 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const path = window.location.pathname;
-    const token = localStorage.getItem('token');
+    setLoading(true);
+    (async () => {
+      // const path = window.location.pathname;
+      try {
+        const user = await requireAuth();
+        console.log('Utilisateur authentifié :', user);
+        dispatch(getUser(user));
+        dispatch(setNavVisible(true));
+        setLoading(false);
+      } catch (err) {
+        console.error('Accès non autorisé', err);
+        // redirection vers la page de login si nécessaire
+        dispatch(setNavVisible(false));
+        setLoading(false);
+        // if (path !== '/login' && path !== '/register') {
+        //   window.location.href = '/login';
+        // }
+      }
+    })();
 
-    if ((!token && path === '/Login') || path === '/register') {
-      setLoading(false);
-    } else {
-      // Vérifier le token à chaque chargement de l'application
-      setLoading(true);
-      requireAuth()
-        .then((res) => {
-          // console.log(res);
-          if (res && typeof res === 'object' ) {
-            const newRes = res as User
-            console.log(newRes);
-            
-            delete newRes.expenses;
-            dispatch(getUser(newRes));
-            dispatch(setNavVisible(true));
-          }
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-  }, [navVisible, dispatch]);
+    return () => {};
+  }, [dispatch]);
 
   return (
     <>
       {loading && !navVisible && <LoaderBoundary />}
       <RouterProvider router={router} />
-      <ToastContainer theme='dark' />
+      <ToastContainer theme="dark" />
     </>
   );
 }

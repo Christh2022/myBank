@@ -12,7 +12,7 @@ export const Header = () => {
         <div>
           <Search/>
         </div>
-        <div className='flex xl:flex-row flex-row-reverse flex-1 items-center xl:justify-end mr-14 lg:mr-0 justify-between gap-2.5 '>
+        <div className='flex xl:flex-row flex-row-reverse flex-1 items-center xl:justify-end justify-between mr-14 lg:mr-0  gap-2.5 '>
           <Icons/>
           <MobileHeader {...{ profileData }} />
         </div>

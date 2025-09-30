@@ -4,10 +4,10 @@ import type { Expenses } from "../utils/Types";
 const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export async function createTransaction(transaction: Expenses) {
-  const token = localStorage.getItem("token");
   const response = await fetch(`${API_URL}/api/expense`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, },
+    headers: { "Content-Type": "application/json",},
+    credentials: 'include',
     body: JSON.stringify(transaction),
   });
 
@@ -25,6 +25,7 @@ export async function updateTransaction(id: number, updates: Expenses) {
   const response = await fetch(`${API_URL}/api/expense/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
+    credentials: 'include',
     body: JSON.stringify(updates),
   });
 
@@ -37,8 +38,8 @@ export async function deleteTransaction(id: number) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem("token")}`,
     },
+    credentials: 'include',
   });
 
   if (!response.ok) throw new Error("Erreur lors de la suppression");
@@ -51,8 +52,8 @@ export async function getTransactions() {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
       },
+      credentials: 'include',
     });
   if (!response.ok) throw new Error("Aucune transaction trouvée pour cet utilisateur");
   return await response.json();

@@ -68,6 +68,10 @@ export async function registerAction({ request }: ActionFunctionArgs) {
     return { message: 'Passwords do not match.' };
   }
 
+  if (clean.phone.length > 10) {
+    return { message: 'Phone number is too long' };
+  }
+
   try {
     await RegisterUser(
       clean.email,

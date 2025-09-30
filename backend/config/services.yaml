@@ -6,4 +6,17 @@ services:
     App\:
         resource: '../src/'
 
+    App\Controller\:
+        resource: '../src/Controller'
+        tags: ['controller.service_arguments']
+
+    App\Listeners\AuthenticationSuccessListener:
+        arguments: ['%lexik_jwt_authentication.token_ttl%']
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_authentication_success, method: onAuthenticationSuccess, priority: -2 }
+
+    App\Listeners\JWTNotFoundListener:
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_not_found, method: onJWTNotFound, priority: 0 }
+
     Symfony\Component\RateLimiter\RateLimiterFactory $apiLimiter: '@rate_limiter.api_limiter'

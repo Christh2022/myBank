@@ -4,11 +4,6 @@ import type { User } from "../utils/Types";
 const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export const UpdateUser = async (data: User, newObj: Partial<{prenom : string, nom: string, telephone: string, adresse: string}>) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        throw new Response("Unauthorized access: No token found", { status: 401 });
-    }
-
     // Représentation à plat des données de `data`
     const original = {
         prenom: data.firstName,
@@ -42,8 +37,8 @@ export const UpdateUser = async (data: User, newObj: Partial<{prenom : string, n
         method: 'PUT',
         headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
         },
+        credentials: 'include',
         body: JSON.stringify(updatesContent),
     });
 

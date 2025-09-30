@@ -88,11 +88,16 @@ export default function Nav() {
                 to={nav.path}
                 key={index}
                 onClick={() => {
-                  dispatch(setCategory([]))
-                  dispatch(setNavigate(true))
+                  dispatch(setCategory([]));
+                  dispatch(setNavigate(true));
                 }}
                 className={({ isActive }) =>
-                  `flex items-center cursor-pointer justify-center ${isActive ? 'white bg-[#FCA311] rounded-[10px] lg:w-[45px] lg:h-[45px]   2xl:w-[50px] 2xl:h-[50px] ' : 'text-[#FFFFFFB3]'}`
+                  `flex items-center cursor-pointer justify-center 
+                ${
+                  isActive
+                    ? 'white bg-[#FCA311] rounded-[10px] lg:w-[45px] lg:h-[45px]   2xl:w-[50px] 2xl:h-[50px] '
+                    : 'text-[#FFFFFFB3]'
+                }`
                 }
               >
                 {nav.Icon}
@@ -100,7 +105,11 @@ export default function Nav() {
             ))}
           </div>
           {/* footer */}
-          <div className="flex flex-col flex-2/12  2xl:gap-[30px] xl:gap-[25px] lg:gap-[20px]  items-center justify-end pb-10 gap-[37px]">
+          <div
+            className="
+            flex flex-col flex-2/12  2xl:gap-[30px] xl:gap-[25px] lg:gap-[20px]
+            items-center justify-end pb-10 gap-[37px]"
+          >
             {footerTab.map((nav, index) => (
               <NavLink
                 to={nav.path}

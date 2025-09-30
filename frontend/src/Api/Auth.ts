@@ -1,17 +1,19 @@
 const API_URL = import.meta.env.VITE_API_URL_DEV;
 
-export async function LoginUser(email: string, password: string): Promise<string>{
-    const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers:{ 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-    })
+export async function LoginUser(email: string, password: string): Promise<void> {
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    credentials: 'include',
+  });
 
-    if (!response.ok) throw new Error('Login failed');
-    
-    const data = await response.json();
-    return data.token;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Login failed');
+  }
 }
+
 
 
 export async function RegisterUser(

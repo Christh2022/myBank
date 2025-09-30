@@ -3,3 +3,8 @@ lexik_jwt_authentication:
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
     token_ttl: 3600 # 1 hour
+    token_extractors:
+        cookie:
+            name: BEARER           # le nom du cookie où le JWT est stocké
+        authorization_header:
+            prefix: Bearer         # toujours possible depuis Authorization header

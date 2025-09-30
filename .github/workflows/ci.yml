@@ -1,10 +1,10 @@
-name: CI Fullstack with Docker & GHCR
+name: CI/CD Fullstack with Docker & GHCR
 
 on:
   push:
-    branches: [ "main"]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main"]
+    branches: [ "main" ]
 
 jobs:
   ci-cd:
@@ -32,28 +32,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
+      # -----------------------------
+      # Backend - Prepare & Test
+      # -----------------------------
       - name: Prepare JWT keys
         run: |
           mkdir -p ./backend/config/jwt
           openssl genrsa -out ./backend/config/jwt/private.pem 2048
           openssl rsa -in ./backend/config/jwt/private.pem -pubout -out ./backend/config/jwt/public.pem
 
-      # -----------------------------
-      # Prepare .env for Symfony
-      # -----------------------------
       - name: Prepare .env
         run: cp ./backend/.env.test ./backend/.env
 
-      # -----------------------------
-      # Debug : vérifier backend
-      # -----------------------------
-      - name: List backend folder
-        run: ls -R ./backend
-
-      # -----------------------------
-      # Backend - PHPUnit tests
-      # -----------------------------
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -70,8 +60,6 @@ jobs:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
         run: php bin/console doctrine:database:create --if-not-exists --env=test
 
-
-
       - name: Run migrations
         working-directory: ./backend
         env:
@@ -82,12 +70,13 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
-        run: php bin/phpunit --filter testRegister
-
-
+        run: | 
+          php bin/phpunit --filter testRegister
+          php bin/phpunit --filter testGetUser
+          php bin/phpunit --filter testAccessWithoutToken(
 
       # -----------------------------
-      # Docker Build & Push
+      # Docker Build & Push to GHCR
       # -----------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -107,8 +96,7 @@ jobs:
           push: true
           tags: ghcr.io/christh2022/mybank/backend:latest
 
-
-      - name: Build & Push Frontend image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -116,5 +104,28 @@ jobs:
           push: true
           tags: ghcr.io/christh2022/mybank/frontend:latest
 
-      
+      # -----------------------------
+      # Deploy to VPS via SSH
+      # -----------------------------
+      - name: Copy docker-compose to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: /opt/mybank
 
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/mybank
+            docker-compose down || true
+            docker-compose pull
+            docker-compose up -d --build
+            docker image prune -f
+            docker ps
