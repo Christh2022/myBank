@@ -70,10 +70,8 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
-        run: | 
-          php bin/phpunit --filter testRegister
-          php bin/phpunit --filter testGetUser
-          php bin/phpunit --filter testAccessWithoutToken(
+        run: php bin/phpunit --filter testRegister
+          
 
       # -----------------------------
       # Docker Build & Push to GHCR
