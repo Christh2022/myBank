@@ -45,6 +45,7 @@ services:
     container_name: mybank_nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend/dist:/usr/share/nginx/html:ro
