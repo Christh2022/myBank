@@ -29,6 +29,9 @@ RUN composer install --no-interaction --optimize-autoloader
 
 RUN chown -R www-data:www-data /var/www/var /var/www/vendor
 
+# Configurer PHP-FPM pour écouter sur TCP plutôt que socket
+RUN sed -i 's|listen = .*|listen = 0.0.0.0:9000|' /usr/local/etc/php-fpm.d/www.conf
+
 EXPOSE 9000
 
 CMD ["php-fpm"]

@@ -18,7 +18,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\Response\JWTAuthenticationSuccessRespon
 class AuthenticationController extends AbstractController
 {
 
-    #[Route('/login', name: 'api_login', methods: ['POST'])]
+    #[Route('/auth/login', name: 'api_login', methods: ['POST'])]
     public function index(
         #[CurrentUser] ?User $user,
         JWTTokenManagerInterface $jwtManager
@@ -35,14 +35,14 @@ class AuthenticationController extends AbstractController
 
 
 
-    #[Route('/logout', name: 'api_logout', methods: ['POST'])]
+    #[Route('/auth/logout', name: 'api_logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
         // The logout route is handled by the security system, so we can just return a success message.
         return $this->json(['message' => 'Logged out successfully'], 200);
     }
 
-    #[Route('/refresh', name: 'api_refresh', methods: ['POST'])]
+    #[Route('/auth/refresh', name: 'api_refresh', methods: ['POST'])]
     public function refresh(#[CurrentUser] ?User $user, JWTTokenManagerInterface $jwtManager): JsonResponse
     {
         if (!$user) {
@@ -52,7 +52,7 @@ class AuthenticationController extends AbstractController
         return $this->json(['token' => $jwtManager->create($user)], 200, [], ['groups' => ['user:read']]);
     }
 
-    #[Route('/check', name: 'api_check', methods: ['GET'])]
+    #[Route('/auth/check', name: 'api_check', methods: ['GET'])]
     public function check(#[CurrentUser] ?User $user): JsonResponse
     {
         if (!$user) {
@@ -62,7 +62,7 @@ class AuthenticationController extends AbstractController
         return $this->json(['user' => $user], 200, [], ['groups' => ['user:read']]);
     }
 
-    #[Route('/register', name: 'api_register', methods: ['POST'])]
+    #[Route('/auth/register', name: 'api_register', methods: ['POST'])]
     public function register(
         Request $request,
         EntityManagerInterface $entityManager,

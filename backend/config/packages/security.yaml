@@ -14,10 +14,10 @@ security:
             security: false
 
         login:
-            pattern: ^/login
+            pattern: ^/auth/login
             stateless: true
             json_login:
-                check_path: /login
+                check_path: /auth/login  
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
@@ -27,17 +27,17 @@ security:
                 interval: '15 minutes'
 
         register:
-            pattern: ^/register
+            pattern: ^/auth/register
             stateless: true
             security: false
 
         check:
-            pattern: ^/check
+            pattern: ^/auth/check
             stateless: true
             jwt: ~
 
         refresh:
-            pattern: ^/refresh
+            pattern: ^/auth/refresh
             stateless: true
             jwt: ~
 
@@ -47,12 +47,12 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/auth/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/auth/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/admin, roles: ROLE_ADMIN }   # Routes admin
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }   # Toutes les autres routes API
-        - { path: ^/check, roles: IS_AUTHENTICATED_FULLY }
-        - { path: ^/refresh, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/auth/check, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/auth/refresh, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

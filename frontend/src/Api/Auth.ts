@@ -1,7 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export async function LoginUser(email: string, password: string): Promise<void> {
-  const response = await fetch(`${API_URL}/login`, {
+  const response = await fetch(`/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -24,14 +23,12 @@ export async function RegisterUser(
     adresse: string,
     telephone: string
   ): Promise<string> {
-    const response = await fetch(`${API_URL}/register`, {
+    const response = await fetch(`/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, nom, prenom, adresse, telephone }),
     });
 
-    console.log(response, API_URL);
-    console.log(API_URL);
     
   
     // 🟡 Vérifie que la réponse est bien 201

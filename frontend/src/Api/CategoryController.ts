@@ -1,10 +1,9 @@
 import { toast } from "react-toastify";
 
-const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export const getPaginatedCategory = async (id: number, page: number, limit: number) => {
 
-  const response = await fetch(`${API_URL}/api/category/user/${id}?page=${page}&limit=${limit}`, {
+  const response = await fetch(`/api/category/user/${id}?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
           'Content-Type': 'application/json',
@@ -23,7 +22,7 @@ export const addCategory = async (
   description: string
 ) => {
 
-  const response = await fetch(`${API_URL}/api/category`, {
+  const response = await fetch(`/api/category`, {
     method: "POST",
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +41,7 @@ export const addCategory = async (
 
 
 export const updateCategory = async (data: {title: string, icon_name: string, description: string}, id: number) => {
-  const response = await fetch(`${API_URL}/api/category/${id}`, {
+  const response = await fetch(`/api/category/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -60,7 +59,7 @@ export const deleteCategory = async (id: number) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Response("Unauthorized access: No token found", { status: 401 });
 
-  const response = await fetch(`${API_URL}/api/category/${id}`, {
+  const response = await fetch(`/api/category/${id}`, {
     method: "DELETE",
     credentials: 'include',
   });
@@ -75,7 +74,7 @@ export const deleteCategory = async (id: number) => {
 
 
 export async function getCategoryByName(categoryName: string) {
-  const response = await fetch(`${API_URL}/api/category/by-name/${categoryName}`, {
+  const response = await fetch(`/api/category/by-name/${categoryName}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

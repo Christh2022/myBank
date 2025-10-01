@@ -1,7 +1,6 @@
 import { parseAdresse } from "../utils/Auth";
 import type { User } from "../utils/Types";
 
-const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export const UpdateUser = async (data: User, newObj: Partial<{prenom : string, nom: string, telephone: string, adresse: string}>) => {
     // Représentation à plat des données de `data`
@@ -33,7 +32,7 @@ export const UpdateUser = async (data: User, newObj: Partial<{prenom : string, n
     console.log(data.id);
 
     // Requête PUT vers Symfony
-    const response = await fetch(`${API_URL}/api/user/${data.id}`, {
+    const response = await fetch(`/api/user/${data.id}`, {
         method: 'PUT',
         headers: {
         'Content-Type': 'application/json',

@@ -1,10 +1,9 @@
 import { toast } from "react-toastify";
 import type { Expenses } from "../utils/Types";
 
-const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export async function createTransaction(transaction: Expenses) {
-  const response = await fetch(`${API_URL}/api/expense`, {
+  const response = await fetch(`/api/expense`, {
     method: "POST",
     headers: { "Content-Type": "application/json",},
     credentials: 'include',
@@ -22,7 +21,7 @@ export async function createTransaction(transaction: Expenses) {
 }
 
 export async function updateTransaction(id: number, updates: Expenses) {
-  const response = await fetch(`${API_URL}/api/expense/${id}`, {
+  const response = await fetch(`/api/expense/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: 'include',
@@ -34,7 +33,7 @@ export async function updateTransaction(id: number, updates: Expenses) {
 }
 
 export async function deleteTransaction(id: number) {
-  const response = await fetch(`${API_URL}/api/expense/${id}`, {
+  const response = await fetch(`/api/expense/${id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -47,7 +46,7 @@ export async function deleteTransaction(id: number) {
 }
 
 export async function getTransactions() {
-  const response = await fetch(`${API_URL}/api/expense/`, 
+  const response = await fetch(`/api/expense/`, 
     {
       method: "GET",
       headers: {

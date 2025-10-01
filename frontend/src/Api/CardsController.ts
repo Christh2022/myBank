@@ -1,10 +1,9 @@
 import { toast } from "react-toastify";
 
-const API_URL = import.meta.env.VITE_API_URL_DEV; 
 
 export async function   getBankCardByNumber(cardNumber: string) {
 
-    const response = await fetch(`${API_URL}/api/bankcards/by-number/${cardNumber}`, {
+    const response = await fetch(`/api/bankcards/by-number/${cardNumber}`, {
         method: "GET",
         headers: {
         "Content-Type": "application/json",
@@ -22,7 +21,7 @@ export async function   getBankCardByNumber(cardNumber: string) {
 }
 
 export async function addBankCard(cardData: number) {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`/api/bankcards`, {
         method: "POST",
         headers: {
         "Content-Type": "application/json",

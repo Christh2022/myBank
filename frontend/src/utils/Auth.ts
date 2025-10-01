@@ -1,9 +1,8 @@
 import type { User } from "./Types";
 
-const API_URL = import.meta.env.VITE_API_URL_DEV;
 
 export async function requireAuth(): Promise<User> {
-  const response = await fetch(`${API_URL}/check`, {
+  const response = await fetch(`/auth/check`, {
     method: 'GET',
     credentials: 'include', // le cookie AUTH_TOKEN sera envoyé automatiquement
     headers: {
