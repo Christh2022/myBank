@@ -1,15 +1,14 @@
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
+    image: ghcr.io/christh2022/mybank/frontend:latest
+
     container_name: mybank_frontend
     depends_on:
       - backend
 
   backend:
-    build:
-      context: ./backend
+    image: ghcr.io/christh2022/mybank/backend:latest
+    
     container_name: mybank_backend
     environment:
       DATABASE_URL: mysql://root:root@db:3306/mybank?serverVersion=8.0
