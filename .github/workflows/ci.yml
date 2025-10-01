@@ -71,7 +71,6 @@ jobs:
         env:
           DATABASE_URL: mysql://root:root@127.0.0.1:3306/mybank_test
         run: php bin/phpunit --filter testRegister
-          
 
       # -----------------------------
       # Docker Build & Push to GHCR
@@ -92,7 +91,9 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ghcr.io/christh2022/mybank/backend:latest
+          tags: |
+            ghcr.io/christh2022/mybank/backend:latest
+            ghcr.io/christh2022/mybank/backend:${{ github.sha }}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -100,7 +101,9 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile.prod
           push: true
-          tags: ghcr.io/christh2022/mybank/frontend:latest
+          tags: |
+            ghcr.io/christh2022/mybank/frontend:latest
+            ghcr.io/christh2022/mybank/frontend:${{ github.sha }}
 
       # -----------------------------
       # Deploy to VPS via SSH
@@ -122,8 +125,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/mybank
-             docker-compose -f docker-compose.prod.yml down || true
-             docker-compose -f docker-compose.prod.yml pull
-             docker-compose -f docker-compose.prod.yml up -d --build
-             docker image prune -f
-             docker ps
+            docker-compose -f docker-compose.prod.yml down || true
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+            docker ps
