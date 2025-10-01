@@ -13,7 +13,7 @@ class AuthenticationControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/register',
+            '/auth/register',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -39,7 +39,7 @@ class AuthenticationControllerTest extends WebTestCase
 
         $client->request(
             'POST',
-            '/login',
+            '/auth/login',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
@@ -66,7 +66,7 @@ class AuthenticationControllerTest extends WebTestCase
         // Accéder à la route protégée en utilisant le JWT
         $client->request(
             'GET',
-            '/check',
+            '/auth/check',
             [],
             [],
             ['HTTP_Authorization' => 'Bearer ' . $token]
@@ -86,7 +86,7 @@ class AuthenticationControllerTest extends WebTestCase
         $client = static::createClient();
 
         // Pas de login → pas de cookie AUTH_TOKEN injecté
-        $client->request('GET', '/check');
+        $client->request('GET', '/auth/check');
 
         // On attend un 401 Unauthorized (ou 403 si configuré ainsi)
         $this->assertResponseStatusCodeSame(401);
@@ -121,7 +121,7 @@ class AuthenticationControllerTest extends WebTestCase
         $client->getCookieJar()->set($invalidCookie);
 
         // Tentative d'accès à la route protégée
-        $client->request('GET', '/check');
+        $client->request('GET', '/auth/check');
 
         // Vérifier le code HTTP
         $this->assertResponseStatusCodeSame(401); 
@@ -153,7 +153,7 @@ class AuthenticationControllerTest extends WebTestCase
         $client->getCookieJar()->set($expiredCookie);
 
         // Tentative d'accès à la route protégée
-        $client->request('GET', '/check');
+        $client->request('GET', '/auth/check');
 
         // On attend une erreur 401 Unauthorized
         $this->assertResponseStatusCodeSame(401);
